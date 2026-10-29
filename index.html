@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fare Cap Line: Is the TTC's 47-Trip Cap Worth Chasing?</title>
+<meta name="description" content="Interactive subway-line map of the TTC's 47-trip monthly fare cap versus the Adult 12-Month Pass. Educational, not financial advice.">
+<style>
+  :root{--red:#da291c;--ink:#14161c;--panel:#1e2129;--line:#2d313c;--dim:#9aa3b2;--txt:#eef1f6;--yel:#ffc72c;--grn:#22c55e;--blue:#60a5fa}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0f1116;color:var(--txt);font:16px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--red)}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 18px}
+  header .wrap{display:flex;align-items:center;gap:12px;padding-top:14px;padding-bottom:14px}
+  .logo{background:#fff;color:var(--red);font-weight:900;letter-spacing:.06em;padding:3px 10px;border-radius:5px;font-size:19px}
+  header h1{font-size:19px;margin:0;font-weight:800}
+  main{padding:26px 0 10px}
+  h2{font-size:28px;line-height:1.2;margin:0 0 8px}
+  .lede{color:#c9cfda;margin:0 0 22px;max-width:820px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px}
+  .kicker{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--yel)}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  .badge{background:#0b0c10;border-radius:12px;padding:8px 14px;font-weight:700;color:var(--dim)}
+  .badge b{color:var(--yel);font-size:26px;margin-left:6px}
+  /* subway track */
+  .track{position:relative;height:150px;margin:18px 6px 6px;background:#0b0c10;border-radius:16px}
+  .rail{position:absolute;left:5%;right:5%;top:50%;height:10px;margin-top:-5px;background:#3a3f4b;border-radius:6px}
+  .fill{position:absolute;left:0;top:0;bottom:0;background:var(--red);border-radius:6px;width:0}
+  .stn{position:absolute;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #3a3f4b;z-index:2}
+  .stn.be{background:var(--yel);border-color:#0b0c10;width:20px;height:20px}
+  .stn.cap{background:var(--red);border-color:#fff;width:22px;height:22px}
+  .lbl{position:absolute;transform:translateX(-50%);text-align:center;font-size:12px;line-height:1.25;white-space:nowrap;color:var(--dim)}
+  .lbl b{display:block;font-size:13px}
+  .lbl.up{bottom:calc(50% + 18px)} .lbl.dn{top:calc(50% + 18px)}
+  .lbl.be b{color:var(--yel)} .lbl.cap b{color:#ff6b5f}
+  .train{position:absolute;top:50%;transform:translate(-50%,-50%);z-index:3;background:#fff;color:var(--ink);border:2px solid var(--red);border-radius:9px;padding:3px 8px;font-weight:800;font-size:13px;display:flex;gap:5px;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,.5);transition:left .12s}
+  .train svg{width:15px;height:15px;fill:var(--red)}
+  label.sl{display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-top:14px}
+  label.sl span{color:var(--dim);font-weight:500}
+  input[type=range]{width:100%;accent-color:var(--red);height:28px}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:6px 22px}
+  .toggle{display:flex;gap:10px;align-items:center;margin-top:16px;font-weight:600;font-size:14px;cursor:pointer}
+  .toggle input{width:20px;height:20px;accent-color:var(--yel)}
+  /* results */
+  .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}
+  .verdict{border-left:6px solid var(--grn)}
+  .verdict.pass{border-left-color:var(--yel)} .verdict.tie{border-left-color:var(--blue)}
+  .vtag{display:inline-block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:99px;background:rgba(34,197,94,.15);color:var(--grn)}
+  .pass .vtag{background:rgba(255,199,44,.15);color:var(--yel)} .tie .vtag{background:rgba(96,165,250,.15);color:var(--blue)}
+  .vhead{font-size:24px;font-weight:800;margin:10px 0 6px;line-height:1.25}
+  .vbody{color:#c9cfda;margin:0}
+  .big{font-size:40px;font-weight:900;line-height:1.1}
+  .sub{color:var(--dim);font-size:14px}
+  .free{margin-top:12px;background:rgba(34,197,94,.12);color:#86efac;border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px}
+  .hidden{display:none}
+  .bars{margin-top:14px}
+  .bar{margin:10px 0}.bar .t{display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+  .bar .b{height:12px;background:#0b0c10;border-radius:7px;overflow:hidden;margin-top:4px}
+  .bar .b i{display:block;height:100%;border-radius:7px}
+  .year{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:10px}
+  .year div{background:#0b0c10;border-radius:12px;padding:12px}
+  .year b{display:block;font-size:22px}
+  svg.chart{width:100%;height:auto;display:block}
+  .note{font-size:13.5px;color:var(--dim)}
+  .disc{background:#0b0c10;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#c9cfda}
+  footer{border-top:1px solid var(--line);margin-top:22px;padding:16px 0 30px;font-size:13px;color:var(--dim)}
+  footer a{color:var(--yel)}
+  @media (max-width:760px){.grid,.controls{grid-template-columns:1fr}.year{grid-template-columns:1fr}h2{font-size:23px}.lbl{font-size:10.5px}.lbl b{font-size:11.5px}.lbl small{display:none}.big{font-size:34px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><span class="logo">TTC</span><h1>Fare Cap Line</h1></div></header>
+<main class="wrap">
+  <h2>Is the TTC's 47-trip fare cap worth chasing?</h2>
+  <p class="lede">Since September 1, 2026, adults who tap the same card or device all month pay <b>$3.30</b> per paid trip, and after <b>47 paid trips</b> in a calendar month the rest are free, so a month never costs more than <b>$155.10</b>. The adult monthly pass ended August 31, 2026, but the <b>Adult 12-Month Pass</b> is still sold at <b>$143.00 a month</b> on a 12-month contract. Ride the line to see which one wins.</p>
+
+  <section class="card">
+    <div class="row">
+      <div><div class="kicker">Line 47 · the fare cap corridor</div><div style="font-weight:800;font-size:20px">Paid trips in a typical month</div></div>
+      <div class="badge">Trips <b id="tripsOut">40</b></div>
+    </div>
+    <div class="track" id="track" aria-hidden="true">
+      <div class="rail" id="rail"><div class="fill" id="fill"></div></div>
+    </div>
+    <label class="sl" for="trips">Paid trips in a typical month <span>0 to 90 · a paid trip is the first tap of a two-hour transfer window</span></label>
+    <input type="range" id="trips" min="0" max="90" step="1" value="40">
+    <div class="controls">
+      <div>
+        <label class="sl" for="light">Light months a year <span id="lightOut">2</span></label>
+        <input type="range" id="light" min="0" max="6" step="1" value="2">
+      </div>
+      <div>
+        <label class="sl" for="lightTrips">Paid trips in a light month <span id="lightTripsOut">20</span></label>
+        <input type="range" id="lightTrips" min="0" max="90" step="1" value="20">
+      </div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="student"> I'm a post-secondary student (compare the $128.15 monthly pass instead)</label>
+  </section>
+
+  <div class="grid">
+    <section class="card verdict" id="verdict">
+      <span class="vtag" id="vtag">Pay as you go</span>
+      <div class="vhead" id="vhead"></div>
+      <p class="vbody" id="vbody"></p>
+      <div class="free hidden" id="free"></div>
+      <div class="bars">
+        <div class="bar"><div class="t"><span>Tap with the cap</span><span id="capVal"></span></div><div class="b"><i id="capBar" style="background:var(--red)"></i></div></div>
+        <div class="bar"><div class="t"><span id="passLbl">Adult 12-Month Pass</span><span id="passVal"></span></div><div class="b"><i id="passBar" style="background:var(--yel)"></i></div></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="kicker">This month</div>
+      <div class="big" id="monthCost"></div>
+      <div class="sub" id="formula"></div>
+      <div class="kicker" style="margin-top:18px">Over a year</div>
+      <div class="year">
+        <div><span class="sub">Cap</span><b id="capYear"></b></div>
+        <div><span class="sub" id="passYearLbl">12-Month Pass</span><b id="passYear"></b></div>
+        <div><span class="sub">Difference</span><b id="yearDiff"></b></div>
+      </div>
+      <p class="note" id="yearNote"></p>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="kicker">Monthly cost vs paid trips</div>
+    <svg class="chart" id="chart" viewBox="0 0 900 330" role="img" aria-label="Line chart of monthly cost against paid trips, with the $155.10 cap and the pass price"></svg>
+    <p class="note">Red: what you pay tapping with the cap. Dashed yellow: the pass. Dashed red: the $155.10 cap. The dot follows your typical month.</p>
+  </section>
+
+  <section class="card">
+    <div class="kicker">How it was made</div>
+    <p class="note" style="margin-top:6px">Built with Google Gemini Canvas, then rebuilt and tested by hand. Gemini's subway-line idea is kept, but its first plan put break-even at "Station 43" (43 trips cost $141.90, still under $143, so it's 44), and a later edit broke its script. The math now lives in <a style="color:var(--yel)" href="https://github.com/ALENZACODES/ttc-fare-cap/blob/main/model.js">model.js</a> and is checked against a separate implementation for every trip count from 0 to 120.</p>
+    <div class="disc"><b>Educational, not financial advice.</b> Simplified: it assumes adult fares paid with one PRESTO card, debit or credit card, or device all month. Switching cards or devices splits your trip count, cash fares ($3.35) don't count toward the cap, and transfers within two hours aren't new paid trips. The 12-Month Pass is a PRESTO contract paid every month. Post-secondary riders who tap pay the $3.30 adult fare; the student view assumes those taps count toward the cap. Check <a style="color:var(--yel)" href="https://www.ttc.ca/Fares-and-passes">ttc.ca</a> before you choose.</div>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    Sources: <a href="https://www.ttc.ca/Fares-and-passes">ttc.ca · Fares and passes</a> and <a href="https://www.ttc.ca/riding-the-ttc/Updates/TTC-monthly-fare-capping">ttc.ca · TTC monthly fare capping</a> (checked October 29, 2026).<br>
+    © 2026 John K. All rights reserved.
+  </div>
+</footer>
+<script src="model.js"></script>
+<script>
+(function () {
+  var M = window.FareModel, $ = function (id) { return document.getElementById(id); };
+  var MAXT = 90, NS = 'http://www.w3.org/2000/svg';
+  var track = $('track');
+
+  function pct(t) { return 5 + 90 * t / MAXT; }      // rail spans 5%..95% of the track
+  function el(tag, attrs, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
+
+  function drawStations(be) {
+    track.querySelectorAll('.stn,.lbl,.train').forEach(function (n) { n.remove(); });
+    var stations = [
+      { t: 0, cls: '', pos: 'dn', html: '<b>0</b>' },
+      { t: be, cls: 'be', pos: 'up', html: '<b>Trip ' + be + '</b><small>pass break-even</small>' },
+      { t: 47, cls: 'cap', pos: 'dn', html: '<b>Trip 47</b><small>$155.10 cap, rest free</small>' },
+      { t: MAXT, cls: '', pos: 'up', html: '<b>90</b>' }
+    ];
+    stations.forEach(function (s) {
+      var d = document.createElement('div'); d.className = 'stn ' + s.cls; d.style.left = pct(s.t) + '%'; track.appendChild(d);
+      var l = document.createElement('div'); l.className = 'lbl ' + s.pos + ' ' + s.cls; l.style.left = pct(s.t) + '%'; l.innerHTML = s.html; track.appendChild(l);
+    });
+    var tr = document.createElement('div'); tr.className = 'train'; tr.id = 'train';
+    tr.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2c-4.4 0-8 .9-8 4v9.5C4 17.4 5.6 19 7.5 19L6 20.5v.5h12v-.5L16.5 19c1.9 0 3.5-1.6 3.5-3.5V6c0-3.1-3.6-4-8-4zM6 8h12v2H6V8zm1.5 8.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm9 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg><span id="trainTxt"></span>';
+    track.appendChild(tr);
+  }
+
+  function drawChart(r) {
+    var svg = $('chart'); while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var L = 70, R = 860, T = 20, B = 290, maxC = 20000;
+    var x = function (t) { return L + (R - L) * t / MAXT; }, y = function (c) { return B - (B - T) * c / maxC; };
+    for (var c = 0; c <= maxC; c += 5000) { svg.appendChild(el('line', { x1: L, x2: R, y1: y(c), y2: y(c), stroke: '#2d313c' })); svg.appendChild(el('text', { x: L - 10, y: y(c) + 5, 'text-anchor': 'end', fill: '#9aa3b2', 'font-size': 14 }, '$' + c / 100)); }
+    for (var t = 0; t <= MAXT; t += 15) svg.appendChild(el('text', { x: x(t), y: B + 24, 'text-anchor': 'middle', fill: '#9aa3b2', 'font-size': 14 }, t));
+    svg.appendChild(el('line', { x1: L, x2: R, y1: y(M.CAP), y2: y(M.CAP), stroke: '#da291c', 'stroke-width': 2, 'stroke-dasharray': '6 6' }));
+    svg.appendChild(el('text', { x: R, y: y(M.CAP) - 8, 'text-anchor': 'end', fill: '#ff6b5f', 'font-size': 14, 'font-weight': 700 }, 'Cap $155.10'));
+    svg.appendChild(el('line', { x1: L, x2: R, y1: y(r.pass), y2: y(r.pass), stroke: '#ffc72c', 'stroke-width': 2, 'stroke-dasharray': '6 6' }));
+    svg.appendChild(el('text', { x: R, y: y(r.pass) + 20, 'text-anchor': 'end', fill: '#ffc72c', 'font-size': 14, 'font-weight': 700 }, (r.pass === M.PASS_12M ? '12-Month Pass ' : 'Student pass ') + M.money(r.pass)));
+    var pts = []; for (var i = 0; i <= MAXT; i++) pts.push(x(i) + ',' + y(M.capCost(i)));
+    svg.appendChild(el('polyline', { points: pts.join(' '), fill: 'none', stroke: '#da291c', 'stroke-width': 4, 'stroke-linejoin': 'round' }));
+    var be = r.breakEven;
+    svg.appendChild(el('line', { x1: x(be), x2: x(be), y1: B, y2: y(M.capCost(be)), stroke: '#ffc72c', 'stroke-dasharray': '3 4' }));
+    svg.appendChild(el('circle', { cx: x(be), cy: y(M.capCost(be)), r: 6, fill: '#ffc72c', stroke: '#14161c', 'stroke-width': 2 }));
+    svg.appendChild(el('text', { x: x(be) - 10, y: y(M.capCost(be)) - 30, 'text-anchor': 'end', fill: '#eef1f6', 'font-size': 14, 'font-weight': 700 }, 'Break-even: trip ' + be + ' (' + M.money(M.capCost(be)) + ')'));
+    svg.appendChild(el('circle', { id: 'dot', cx: x(r.trips), cy: y(r.month), r: 9, fill: '#da291c', stroke: '#fff', 'stroke-width': 3 }));
+  }
+
+  function render() {
+    var p = { trips: +$('trips').value, lightMonths: +$('light').value, lightTrips: +$('lightTrips').value, student: $('student').checked };
+    var r = M.compare(p), money = M.money;
+    var passShort = p.student ? 'the student pass' : 'the 12-Month Pass';
+    drawStations(r.breakEven);
+    $('tripsOut').textContent = r.trips; $('trainTxt').textContent = r.trips;
+    $('lightOut').textContent = r.lightMonths; $('lightTripsOut').textContent = r.lightTrips;
+    $('fill').style.width = (100 * r.trips / MAXT) + '%'; $('train').style.left = pct(r.trips) + '%';
+
+    $('monthCost').textContent = money(r.month);
+    $('formula').textContent = r.paid + ' paid trip' + (r.paid === 1 ? '' : 's') + ' × $3.30' + (r.free ? ' + ' + r.free + ' free' : '');
+    $('capVal').textContent = money(r.month); $('passVal').textContent = money(r.pass); $('passLbl').textContent = r.passName;
+    $('capBar').style.width = (100 * r.month / 16000) + '%'; $('passBar').style.width = (100 * r.pass / 16000) + '%';
+
+    var v = $('verdict'); v.className = 'card verdict ' + r.verdict;
+    if (r.verdict === 'cap') {
+      $('vtag').textContent = 'Tap and cap wins';
+      $('vhead').textContent = 'Pay as you go saves ' + money(-r.monthDiff) + ' this month';
+      $('vbody').textContent = r.trips + ' paid trips cost ' + money(r.month) + ', under ' + passShort + ' at ' + money(r.pass) + '. The pass only pays off from trip ' + r.breakEven + '.';
+    } else if (r.verdict === 'tie') {
+      $('vtag').textContent = 'Dead heat'; $('vhead').textContent = 'Both cost ' + money(r.month); $('vbody').textContent = 'Either way works this month.';
+    } else {
+      $('vtag').textContent = (p.student ? 'Student pass' : '12-Month Pass') + ' wins';
+      $('vhead').textContent = 'The pass saves ' + money(r.monthDiff) + ' this month';
+      $('vbody').textContent = r.trips >= 47
+        ? 'You hit the cap, but the cap (' + money(M.CAP) + ') still costs more than ' + passShort + ' (' + money(r.pass) + '). Reaching 47 trips doesn\'t beat the pass.'
+        : r.trips + ' paid trips cost ' + money(r.month) + ', past the trip-' + r.breakEven + ' break-even for ' + passShort + ' (' + money(r.pass) + ').';
+    }
+    var f = $('free');
+    if (r.free > 0) { f.classList.remove('hidden'); f.textContent = r.free + ' free trip' + (r.free === 1 ? '' : 's') + ' after the cap, worth ' + money(r.capSaved) + ' at $3.30 each.'; }
+    else f.classList.add('hidden');
+
+    $('capYear').textContent = money(r.capYear); $('passYear').textContent = money(r.passYear);
+    $('passYearLbl').textContent = p.student ? 'Student pass*' : '12-Month Pass';
+    $('yearDiff').textContent = r.yearDiff === 0 ? '$0.00' : money(Math.abs(r.yearDiff));
+    var who = r.yearVerdict === 'cap' ? 'The cap' : (r.yearVerdict === 'pass' ? (p.student ? 'The student pass' : 'The 12-Month Pass') : 'Neither');
+    $('yearNote').textContent = (r.yearVerdict === 'tie' ? 'The year is a tie' : who + ' is cheaper over the year by ' + money(Math.abs(r.yearDiff))) +
+      ', with ' + (12 - r.lightMonths) + ' typical month' + (12 - r.lightMonths === 1 ? '' : 's') + ' of ' + r.trips + ' trips and ' + r.lightMonths + ' light month' + (r.lightMonths === 1 ? '' : 's') + ' of ' + r.lightTrips + '.' +
+      (p.student ? ' *Student pass bought only in months where it beats tapping.' : ' The 12-Month Pass is paid all 12 months, light or not.');
+    drawChart(r);
+  }
+  ['trips', 'light', 'lightTrips', 'student'].forEach(function (id) { $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+  render();
+})();
+</script>
+</body>
+</html>
