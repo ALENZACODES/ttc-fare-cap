@@ -37,3 +37,14 @@ The first version was built with Google Gemini Canvas ([shared canvas](https://s
 Educational, not financial advice. It assumes adult fares paid with one card or device all month. Switching cards or devices splits your count, cash fares don't count toward the cap, and rules can change. Check ttc.ca before you choose.
 
 © 2026 John K. All rights reserved.
+
+## Project structure
+
+```text
+ttc-fare-cap/
+├── tests/             # Automated tests
+│   └── model.test.js  # Checks the model against an independent implementation
+├── index.html         # The page
+├── model.js           # Fare model
+└── README.md          # This file
+```
